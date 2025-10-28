@@ -1,4 +1,4 @@
-# Replace the content of railway.json with:
+
 {
   "build": {
     "builder": "heroku/buildpacks:20"
