@@ -1,11 +1,11 @@
-
+# Replace the content of railway.json with:
 {
   "build": {
     "builder": "heroku/buildpacks:20"
   },
   "buildpacks": [
     {
-      "url": "heroku/php"
+      "url": "https://github.com/heroku/heroku-buildpack-php"
     }
   ]
 }
