@@ -1,0 +1,146 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sign Up - TickBase{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex flex-col">
+    <main class="flex-1 flex items-center justify-center bg-secondary/30 py-12 px-4">
+        <div class="w-full max-w-md bg-card rounded-xl shadow-lg p-6 border border-border">
+            <div class="space-y-1 text-center mb-6">
+                <h1 class="text-2xl font-bold">Create an account</h1>
+                <p class="text-muted-foreground">
+                    Enter your details to get started with TickBase
+                </p>
+            </div>
+
+            {% if error %}
+                <div class="mb-4 p-3 bg-destructive/10 border border-destructive rounded-md">
+                    <p class="text-destructive text-sm">{{ error }}</p>
+                </div>
+            {% endif %}
+
+            <form method="post" class="space-y-4">
+                <div class="space-y-2">
+                    <label for="name" class="form-label">Name</label>
+                    <input type="text" id="name" name="name" placeholder="John Doe" class="form-input" required>
+                </div>
+
+                <div class="space-y-2">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" name="email" placeholder="user@example.com" class="form-input" required>
+                </div>
+
+                <div class="space-y-2">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" id="password" name="password" placeholder="At least 6 characters" class="form-input" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-full">
+                    Create Account
+                </button>
+            </form>
+
+            <div class="mt-6 text-center text-sm">
+                <p class="text-muted-foreground">
+                    Already have an account? 
+                    <a href="{{ path('app_login') }}" class="text-primary hover:underline font-medium ml-1">
+                        Login
+                    </a>
+                </p>
+            </div>
+        </div>
+    </main>
+    
+    {% include 'components/footer.html.twig' %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add real-time validation
+    const form = document.querySelector('form');
+    const nameInput = document.querySelector('#name');
+    const emailInput = document.querySelector('#email');
+    const passwordInput = document.querySelector('#password');
+
+    function validateEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function showError(input, message) {
+        let errorElement = input.parentNode.querySelector('.form-error');
+        if (!errorElement) {
+            errorElement = document.createElement('p');
+            errorElement.className = 'form-error';
+            input.parentNode.appendChild(errorElement);
+        }
+        errorElement.textContent = message;
+        input.classList.add('border-destructive');
+    }
+
+    function clearError(input) {
+        const errorElement = input.parentNode.querySelector('.form-error');
+        if (errorElement) {
+            errorElement.remove();
+        }
+        input.classList.remove('border-destructive');
+    }
+
+    nameInput.addEventListener('blur', function() {
+        if (!this.value.trim()) {
+            showError(this, 'Name is required');
+        } else {
+            clearError(this);
+        }
+    });
+
+    emailInput.addEventListener('blur', function() {
+        if (!this.value.trim()) {
+            showError(this, 'Email is required');
+        } else if (!validateEmail(this.value)) {
+            showError(this, 'Invalid email format');
+        } else {
+            clearError(this);
+        }
+    });
+
+    passwordInput.addEventListener('blur', function() {
+        if (!this.value) {
+            showError(this, 'Password is required');
+        } else if (this.value.length < 6) {
+            showError(this, 'Password must be at least 6 characters');
+        } else {
+            clearError(this);
+        }
+    });
+
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+
+        if (!nameInput.value.trim()) {
+            showError(nameInput, 'Name is required');
+            isValid = false;
+        }
+
+        if (!emailInput.value.trim()) {
+            showError(emailInput, 'Email is required');
+            isValid = false;
+        } else if (!validateEmail(emailInput.value)) {
+            showError(emailInput, 'Invalid email format');
+            isValid = false;
+        }
+
+        if (!passwordInput.value) {
+            showError(passwordInput, 'Password is required');
+            isValid = false;
+        } else if (passwordInput.value.length < 6) {
+            showError(passwordInput, 'Password must be at least 6 characters');
+            isValid = false;
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

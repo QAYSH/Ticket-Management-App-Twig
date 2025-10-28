@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TickBase - Ticket Management{% endblock %}</title>
+    <link rel="stylesheet" href="{{ asset('assets/css/global.css') }}">
+</head>
+<body class="bg-background text-foreground antialiased">
+    {% block body %}{% endblock %}
+    
+    {# Toast notifications will be displayed here #}
+    <div id="toast-container"></div>
+
+    <script>
+        // Simple toast functionality to match Vue app
+        function showToast(title, description = '', type = 'info') {
+            const toastContainer = document.getElementById('toast-container');
+            const toastId = 'toast-' + Date.now();
+            
+            const toast = document.createElement('div');
+            toast.id = toastId;
+            toast.className = `toast toast-${type} fixed top-4 right-4 z-50 max-w-sm p-4 rounded-lg shadow-lg border transform transition-all duration-300`;
+            toast.innerHTML = `
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <h4 class="font-semibold">${title}</h4>
+                        ${description ? `<p class="text-sm opacity-90 mt-1">${description}</p>` : ''}
+                    </div>
+                    <button onclick="document.getElementById('${toastId}').remove()" class="ml-4 opacity-70 hover:opacity-100 transition-opacity">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (document.getElementById(toastId)) {
+                    document.getElementById(toastId).remove();
+                }
+            }, 5000);
+        }
+
+        // Add toast styles to match Vue app
+        const style = document.createElement('style');
+        style.textContent = `
+            .toast-success { background-color: hsl(142 76% 36%); color: white; border-color: hsl(142 76% 36% / 0.2); }
+            .toast-error { background-color: hsl(0 84% 60%); color: white; border-color: hsl(0 84% 60% / 0.2); }
+            .toast-warning { background-color: hsl(38 92% 50%); color: white; border-color: hsl(38 92% 50% / 0.2); }
+            .toast-info { background-color: hsl(238 76% 58%); color: white; border-color: hsl(238 76% 58% / 0.2); }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

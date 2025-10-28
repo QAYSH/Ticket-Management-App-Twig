@@ -1,0 +1,11 @@
+
+{
+  "build": {
+    "builder": "heroku/buildpacks:20"
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/php"
+    }
+  ]
+}
