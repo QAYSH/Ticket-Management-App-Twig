@@ -63,7 +63,8 @@
         "preferred-install": {
             "*": "dist"
         },
-        "sort-packages": true
+        "sort-packages": true,
+        "platform-check": false
     },
     "autoload": {
         "psr-4": {
@@ -94,6 +95,9 @@
         ],
         "post-update-cmd": [
             "@auto-scripts"
+        ],
+        "post-deploy-cmd": [
+            "php bin/console cache:clear --env=prod"
         ]
     },
     "conflict": {

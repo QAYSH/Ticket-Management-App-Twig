@@ -1,0 +1,62 @@
+<div class="ticket-card bg-white rounded-xl p-6 shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 group" data-status="{{ ticket.status }}">
+    <div class="flex items-start justify-between gap-2 mb-4">
+        <h3 class="text-lg font-semibold line-clamp-2">{{ ticket.title }}</h3>
+        <span 
+            class="px-3 py-1 rounded-full text-sm font-medium text-white 
+                   {% if ticket.status == 'open' %}bg-green-600
+                   {% elseif ticket.status == 'in_progress' %}bg-yellow-600
+                   {% else %}bg-gray-600{% endif %}"
+        >
+            {% if ticket.status == 'open' %}Open
+            {% elseif ticket.status == 'in_progress' %}In Progress
+            {% else %}Closed{% endif %}
+        </span>
+    </div>
+    
+    <p class="text-gray-500 line-clamp-3 mb-4">
+        {{ ticket.description ?: 'No description provided' }}
+    </p>
+    
+    <div class="flex items-center justify-between text-sm text-gray-500">
+        <div>
+            <p>Created: {{ ticket.createdAt|date('M j, Y') }}</p>
+            {% if ticket.updatedAt != ticket.createdAt %}
+                <p>Updated: {{ ticket.updatedAt|date('M j, Y') }}</p>
+            {% endif %}
+        </div>
+        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button 
+                onclick="openEditForm('{{ ticket.id }}', `{{ ticket.title|escape('js') }}`, `{{ ticket.description|escape('js') }}`, '{{ ticket.status }}')"
+                class="p-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            >
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+            </button>
+            <button 
+                onclick="openDeleteModal('{{ ticket.id }}')"
+                class="p-2 border border-gray-300 rounded-md hover:bg-red-50 hover:text-red-600 transition-colors"
+            >
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+</style>

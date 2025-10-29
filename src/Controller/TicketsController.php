@@ -2,109 +2,180 @@
 
 namespace App\Controller;
 
-use App\Entity\Ticket;
-use App\Form\TicketFormType;
-use App\Repository\TicketRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use App\Service\SessionManager;
+use App\Service\TicketService;
+use App\Service\ToastService;
 
 class TicketsController extends AbstractController
 {
-    #[Route('/tickets', name: 'app_tickets')]
-    public function index(Request $request, TicketRepository $ticketRepository, EntityManagerInterface $entityManager): Response
+    private SessionManager $sessionManager;
+    private TicketService $ticketService;
+    private ToastService $toastService;
+
+    public function __construct()
     {
-        $user = $this->getUser();
-        if (!$user) {
+        $this->sessionManager = new SessionManager();
+        $this->ticketService = new TicketService();
+        $this->toastService = new ToastService();
+    }
+
+    #[Route('/tickets', name: 'app_tickets')]
+    public function index(Request $request): Response
+    {
+        // Check if user is logged in
+        if (!$this->sessionManager->isLoggedIn()) {
+            $this->toastService->error('Authentication required', 'Please log in to access tickets');
             return $this->redirectToRoute('app_login');
         }
 
-        $status = $request->query->get('status', 'all');
-        $create = $request->query->get('create') === 'true';
+        $user = $this->sessionManager->getUser();
+        $tickets = $this->ticketService->getAllTickets();
+        
+        // Check if we should show create form
+        $showCreateForm = $request->query->get('create') === 'true';
 
-        $tickets = match ($status) {
-            'open' => $ticketRepository->findBy(['user' => $user, 'status' => 'open'], ['createdAt' => 'DESC']),
-            'in_progress' => $ticketRepository->findBy(['user' => $user, 'status' => 'in_progress'], ['createdAt' => 'DESC']),
-            'closed' => $ticketRepository->findBy(['user' => $user, 'status' => 'closed'], ['createdAt' => 'DESC']),
-            default => $ticketRepository->findBy(['user' => $user], ['createdAt' => 'DESC'])
-        };
-
-        $ticket = new Ticket();
-        $form = $this->createForm(TicketFormType::class, $ticket);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $ticket->setUser($user);
-            
-            $entityManager->persist($ticket);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Ticket created successfully!');
-
-            return $this->redirectToRoute('app_tickets');
-        }
-
-        $counts = [
-            'all' => $ticketRepository->count(['user' => $user]),
-            'open' => $ticketRepository->count(['user' => $user, 'status' => 'open']),
-            'in_progress' => $ticketRepository->count(['user' => $user, 'status' => 'in_progress']),
-            'closed' => $ticketRepository->count(['user' => $user, 'status' => 'closed']),
-        ];
+        $toasts = $this->toastService->getToasts();
 
         return $this->render('tickets/index.html.twig', [
+            'user' => $user,
             'tickets' => $tickets,
-            'current_status' => $status,
-            'counts' => $counts,
-            'form' => $form->createView(),
-            'show_form' => $create || $form->isSubmitted(),
+            'showCreateForm' => $showCreateForm,
+            'activeTab' => 'all',
+            'toasts' => $toasts
         ]);
     }
 
-    #[Route('/tickets/{id}/edit', name: 'app_tickets_edit')]
-    public function edit(Request $request, Ticket $ticket, EntityManagerInterface $entityManager): Response
+    #[Route('/tickets/create', name: 'app_tickets_create', methods: ['POST'])]
+    public function create(Request $request): Response
     {
-        $user = $this->getUser();
-        if (!$user || $ticket->getUser() !== $user) {
-            $this->addFlash('error', 'You cannot edit this ticket.');
-            return $this->redirectToRoute('app_tickets');
+        if (!$this->sessionManager->isLoggedIn()) {
+            $this->toastService->error('Authentication required', 'Please log in to create tickets');
+            return $this->redirectToRoute('app_login');
         }
 
-        $form = $this->createForm(TicketFormType::class, $ticket);
-        $form->handleRequest($request);
+        $title = $request->request->get('title', '');
+        $description = $request->request->get('description', '');
+        $status = $request->request->get('status', 'open');
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $ticket->setUpdatedAt(new \DateTimeImmutable());
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Ticket updated successfully!');
-
-            return $this->redirectToRoute('app_tickets');
+        // Validate required fields
+        if (empty(trim($title))) {
+            $this->toastService->error('Validation error', 'Title is required');
+            return $this->redirectToRoute('app_tickets', ['create' => 'true']);
         }
 
-        return $this->render('tickets/edit.html.twig', [
-            'form' => $form->createView(),
-            'ticket' => $ticket,
-        ]);
-    }
-
-    #[Route('/tickets/{id}/delete', name: 'app_tickets_delete', methods: ['POST'])]
-    public function delete(Request $request, Ticket $ticket, EntityManagerInterface $entityManager): Response
-    {
-        $user = $this->getUser();
-        if (!$user || $ticket->getUser() !== $user) {
-            $this->addFlash('error', 'You cannot delete this ticket.');
-            return $this->redirectToRoute('app_tickets');
+        if (!in_array($status, ['open', 'in_progress', 'closed'])) {
+            $this->toastService->error('Validation error', 'Invalid status value');
+            return $this->redirectToRoute('app_tickets', ['create' => 'true']);
         }
 
-        if ($this->isCsrfTokenValid('delete'.$ticket->getId(), $request->request->get('_token'))) {
-            $entityManager->remove($ticket);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Ticket deleted successfully!');
+        try {
+            $this->ticketService->createTicket($title, $description, $status);
+            $this->toastService->success('Ticket created successfully', 'Your ticket has been created and is now visible in the list');
+        } catch (\Exception $e) {
+            $this->toastService->error('Failed to create ticket', 'Please try again later');
         }
 
         return $this->redirectToRoute('app_tickets');
+    }
+
+    #[Route('/tickets/{id}/edit', name: 'app_tickets_edit', methods: ['POST'])]
+    public function edit(Request $request, string $id): Response
+    {
+        if (!$this->sessionManager->isLoggedIn()) {
+            $this->toastService->error('Authentication required', 'Please log in to edit tickets');
+            return $this->redirectToRoute('app_login');
+        }
+
+        $title = $request->request->get('title', '');
+        $description = $request->request->get('description', '');
+        $status = $request->request->get('status', 'open');
+
+        // Validate required fields
+        if (empty(trim($title))) {
+            $this->toastService->error('Validation error', 'Title is required');
+            return $this->redirectToRoute('app_tickets');
+        }
+
+        if (!in_array($status, ['open', 'in_progress', 'closed'])) {
+            $this->toastService->error('Validation error', 'Invalid status value');
+            return $this->redirectToRoute('app_tickets');
+        }
+
+        // Check if ticket exists
+        $existingTicket = $this->ticketService->getTicketById($id);
+        if (!$existingTicket) {
+            $this->toastService->error('Ticket not found', 'The ticket you are trying to edit does not exist');
+            return $this->redirectToRoute('app_tickets');
+        }
+
+        try {
+            $this->ticketService->updateTicket($id, $title, $description, $status);
+            $this->toastService->success('Ticket updated successfully', 'Your changes have been saved');
+        } catch (\Exception $e) {
+            $this->toastService->error('Failed to update ticket', 'Please try again later');
+        }
+
+        return $this->redirectToRoute('app_tickets');
+    }
+
+    #[Route('/tickets/{id}/delete', name: 'app_tickets_delete', methods: ['POST'])]
+    public function delete(string $id): Response
+    {
+        if (!$this->sessionManager->isLoggedIn()) {
+            $this->toastService->error('Authentication required', 'Please log in to delete tickets');
+            return $this->redirectToRoute('app_login');
+        }
+
+        // Check if ticket exists
+        $existingTicket = $this->ticketService->getTicketById($id);
+        if (!$existingTicket) {
+            $this->toastService->error('Ticket not found', 'The ticket you are trying to delete does not exist');
+            return $this->redirectToRoute('app_tickets');
+        }
+
+        try {
+            $this->ticketService->deleteTicket($id);
+            $this->toastService->success('Ticket deleted successfully', 'The ticket has been permanently removed');
+        } catch (\Exception $e) {
+            $this->toastService->error('Failed to delete ticket', 'Please try again later');
+        }
+
+        return $this->redirectToRoute('app_tickets');
+    }
+
+    #[Route('/tickets/filter/{status}', name: 'app_tickets_filter')]
+    public function filter(string $status): Response
+    {
+        if (!$this->sessionManager->isLoggedIn()) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $user = $this->sessionManager->getUser();
+        
+        // Validate status
+        if (!in_array($status, ['all', 'open', 'in_progress', 'closed'])) {
+            $status = 'all';
+        }
+
+        $allTickets = $this->ticketService->getAllTickets();
+        
+        // Filter tickets if not 'all'
+        $tickets = $status === 'all' 
+            ? $allTickets 
+            : $this->ticketService->getTicketsByStatus($status);
+
+        $toasts = $this->toastService->getToasts();
+
+        return $this->render('tickets/index.html.twig', [
+            'user' => $user,
+            'tickets' => $tickets,
+            'showCreateForm' => false,
+            'activeTab' => $status,
+            'toasts' => $toasts
+        ]);
     }
 }

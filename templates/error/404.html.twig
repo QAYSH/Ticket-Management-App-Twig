@@ -1,0 +1,16 @@
+{% extends "base.html.twig" %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col">
+    <div class="flex-1 flex items-center justify-center bg-gray-50">
+        <div class="text-center">
+            <h1 class="text-4xl font-bold mb-4">404</h1>
+            <p class="text-gray-500 mb-6">Page not found</p>
+            <a href="/" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 transition-colors">
+                Go Home
+            </a>
+        </div>
+    </div>
+    {% include "components/footer.html.twig" %}
+</div>
+{% endblock %}

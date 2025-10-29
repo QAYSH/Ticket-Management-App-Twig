@@ -1,0 +1,83 @@
+<form id="ticket-form" method="POST" action="/tickets/create" class="w-full max-w-lg mx-auto px-4 sm:px-6 md:px-8 py-6 bg-white space-y-6">
+    <input type="hidden" id="ticket-id" name="id">
+    
+    <div class="space-y-2">
+        <label for="ticket-title" class="block text-sm font-medium text-gray-900">
+            Title <span class="text-red-500">*</span>
+        </label>
+        <input
+            id="ticket-title"
+            name="title"
+            type="text"
+            placeholder="Enter ticket title"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+        />
+    </div>
+
+    <div class="space-y-2">
+        <label for="ticket-description" class="block text-sm font-medium text-gray-900">Description</label>
+        <textarea
+            id="ticket-description"
+            name="description"
+            placeholder="Enter ticket description"
+            rows="4"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            maxlength="1000"
+        ></textarea>
+        <p class="text-xs text-gray-500">
+            <span id="char-count">0</span>/1000 characters
+        </p>
+    </div>
+
+    <div class="space-y-2">
+        <label for="ticket-status" class="block text-sm font-medium text-gray-900">
+            Status <span class="text-red-500">*</span>
+        </label>
+        <select
+            id="ticket-status"
+            name="status"
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+        >
+            <option value="" disabled selected>Select status</option>
+            <option value="open">Open</option>
+            <option value="in_progress">In Progress</option>
+            <option value="closed">Closed</option>
+        </select>
+    </div>
+
+    <div class="flex flex-col sm:flex-row gap-3 justify-end pt-4">
+        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 bg-white text-gray-700 rounded-md font-medium hover:bg-gray-50 transition-colors w-full sm:w-auto">
+            Cancel
+        </button>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors w-full sm:w-auto">
+            Create Ticket
+        </button>
+    </div>
+</form>
+
+<script>
+// Character count for description
+document.getElementById('ticket-description')?.addEventListener('input', function() {
+    document.getElementById('char-count').textContent = this.value.length;
+});
+
+// Form submission handling
+document.getElementById('ticket-form')?.addEventListener('submit', function(e) {
+    const ticketId = document.getElementById('ticket-id').value;
+    
+    // Update action URL for edit
+    if (ticketId) {
+        this.action = `/tickets/${ticketId}/edit`;
+    }
+});
+
+// Initialize character count
+document.addEventListener('DOMContentLoaded', function() {
+    const description = document.getElementById('ticket-description');
+    if (description) {
+        document.getElementById('char-count').textContent = description.value.length;
+    }
+});
+</script>

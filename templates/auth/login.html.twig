@@ -1,153 +1,65 @@
-{% extends 'base.html.twig' %}
+{% extends "base.html.twig" %}
 
-{% block title %}Login - TickBase{% endblock %}
-
-{% block body %}
+{% block content %}
 <div class="min-h-screen flex flex-col">
-    <main class="flex-1 flex items-center justify-center bg-secondary/30 py-12 px-4">
-        <div class="w-full max-w-md bg-card rounded-xl shadow-lg p-6 border border-border">
+    <main class="flex-1 flex items-center justify-center bg-gray-50 py-12 px-4">
+        <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-6 border border-gray-200">
             <div class="space-y-1 text-center mb-6">
                 <h1 class="text-2xl font-bold">Welcome back</h1>
-                <p class="text-muted-foreground">
+                <p class="text-gray-500">
                     Enter your credentials to access your account
                 </p>
             </div>
 
-            {% if error %}
-                <div class="mb-4 p-3 bg-destructive/10 border border-destructive rounded-md">
-                    <p class="text-destructive text-sm">{{ error.messageKey|trans(error.messageData, 'security') }}</p>
-                </div>
-            {% endif %}
-
-            <form method="post" class="space-y-4">
-                {% if app.user %}
-                    <div class="mb-3">
-                        You are logged in as {{ app.user.userIdentifier }}, <a href="{{ path('app_logout') }}">Logout</a>
-                    </div>
-                {% endif %}
-
+            <form action="/auth/login-handler" method="POST" class="space-y-4">
                 <div class="space-y-2">
-                    <label for="username" class="form-label">Email</label>
-                    <input 
-                        type="email" 
-                        value="{{ last_username }}" 
-                        name="_username" 
-                        id="username" 
-                        placeholder="user@example.com" 
-                        class="form-input" 
-                        autocomplete="email" 
-                        required 
-                        autofocus
-                    >
-                </div>
-
-                <div class="space-y-2">
-                    <label for="password" class="form-label">Password</label>
-                    <input 
-                        type="password" 
-                        name="_password" 
-                        id="password" 
-                        placeholder="Enter your password" 
-                        class="form-input" 
-                        autocomplete="current-password" 
+                    <label for="email" class="block text-sm font-medium text-gray-900 mb-2">Email</label>
+                    <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="user@example.com"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         required
-                    >
+                    />
                 </div>
 
-                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                <div class="space-y-2">
+                    <label for="password" class="block text-sm font-medium text-gray-900 mb-2">Password</label>
+                    <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        placeholder="Enter your password"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        required
+                    />
+                </div>
 
-                <button type="submit" class="btn btn-primary w-full">
+                <button 
+                    type="submit" 
+                    class="w-full bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors"
+                >
                     Login
                 </button>
             </form>
 
             <div class="mt-6 text-center text-sm">
-                <p class="text-muted-foreground">
+                <p class="text-gray-500">
                     Don't have an account? 
-                    <a href="{{ path('app_signup') }}" class="text-primary hover:underline font-medium ml-1">
+                    <a href="/auth/signup" class="text-blue-600 hover:underline font-medium ml-1">
                         Sign up
                     </a>
                 </p>
             </div>
 
-            <div class="mt-6 p-4 bg-muted rounded-lg">
-                <p class="text-xs text-muted-foreground text-center mb-2">Demo credentials:</p>
+            <div class="mt-6 p-4 bg-gray-100 rounded-lg">
+                <p class="text-xs text-gray-500 text-center mb-2">Demo credentials:</p>
                 <p class="text-xs font-mono text-center">user@example.com / password123</p>
             </div>
         </div>
     </main>
     
-    {% include 'components/footer.html.twig' %}
+    {% include "components/footer.html.twig" %}
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add real-time validation
-    const form = document.querySelector('form');
-    const emailInput = document.querySelector('#username');
-    const passwordInput = document.querySelector('#password');
-
-    function validateEmail(email) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
-
-    function showError(input, message) {
-        let errorElement = input.parentNode.querySelector('.form-error');
-        if (!errorElement) {
-            errorElement = document.createElement('p');
-            errorElement.className = 'form-error';
-            input.parentNode.appendChild(errorElement);
-        }
-        errorElement.textContent = message;
-        input.classList.add('border-destructive');
-    }
-
-    function clearError(input) {
-        const errorElement = input.parentNode.querySelector('.form-error');
-        if (errorElement) {
-            errorElement.remove();
-        }
-        input.classList.remove('border-destructive');
-    }
-
-    emailInput.addEventListener('blur', function() {
-        if (!this.value.trim()) {
-            showError(this, 'Email is required');
-        } else if (!validateEmail(this.value)) {
-            showError(this, 'Invalid email format');
-        } else {
-            clearError(this);
-        }
-    });
-
-    passwordInput.addEventListener('blur', function() {
-        if (!this.value) {
-            showError(this, 'Password is required');
-        } else {
-            clearError(this);
-        }
-    });
-
-    form.addEventListener('submit', function(e) {
-        let isValid = true;
-
-        if (!emailInput.value.trim()) {
-            showError(emailInput, 'Email is required');
-            isValid = false;
-        } else if (!validateEmail(emailInput.value)) {
-            showError(emailInput, 'Invalid email format');
-            isValid = false;
-        }
-
-        if (!passwordInput.value) {
-            showError(passwordInput, 'Password is required');
-            isValid = false;
-        }
-
-        if (!isValid) {
-            e.preventDefault();
-        }
-    });
-});
-</script>
 {% endblock %}

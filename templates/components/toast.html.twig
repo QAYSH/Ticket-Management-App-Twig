@@ -1,0 +1,60 @@
+<div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
+    {% for toast in toasts %}
+        <div 
+            class="p-4 rounded-lg shadow-lg border transform transition-all duration-300 toast-message"
+            data-toast-id="{{ toast.id }}"
+            data-type="{{ toast.type }}"
+        >
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <h4 class="font-semibold">{{ toast.title }}</h4>
+                    {% if toast.description %}
+                        <p class="text-sm opacity-90 mt-1">
+                            {{ toast.description }}
+                        </p>
+                    {% endif %}
+                </div>
+                <button
+                    onclick="dismissToast('{{ toast.id }}')"
+                    class="ml-4 opacity-70 hover:opacity-100 transition-opacity"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<script>
+function dismissToast(toastId) {
+    const toast = document.querySelector(`[data-toast-id="${toastId}"]`);
+    if (toast) {
+        toast.style.transform = 'translateX(100%)';
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }
+}
+
+// Auto-dismiss toasts after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.toast-message').forEach(toast => {
+        setTimeout(() => {
+            dismissToast(toast.dataset.toastId);
+        }, 5000);
+    });
+});
+
+// Add toast styles based on type
+document.querySelectorAll('.toast-message').forEach(toast => {
+    const type = toast.dataset.type;
+    const styles = {
+        success: 'bg-green-500 text-white border-green-600/20',
+        error: 'bg-red-500 text-white border-red-600/20',
+        warning: 'bg-yellow-500 text-white border-yellow-600/20',
+        info: 'bg-blue-500 text-white border-blue-600/20'
+    };
+    toast.classList.add(...styles[type].split(' '));
+});
+</script>
