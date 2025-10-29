@@ -3,6 +3,9 @@
 use App\Kernel;
 use Symfony\Component\HttpFoundation\Request;
 
+// TEMPORARY FIX: Suppress deprecation warnings for PHP 8.1 compatibility
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+
 require_once dirname(__DIR__).'/vendor/autoload_runtime.php';
 
 // Handle Railway environment variables
